@@ -9,8 +9,8 @@ sub run($$; @);
 sub finde_max_power($$);
 sub finde_basis($);
 
-run(1, 1000);
 
+#Для нахождения простых чисел используется алгоритм теста Миллера-Рабина.
 sub run($$; @) {
 	my ($x, $y) = @_;
 	my ($m, $k) = (undef, undef);
@@ -61,15 +61,12 @@ sub finde_basis($) {
 	my @basis = ();
 	my @range = ();
 
-	for (my $i = 0; $i < 15; $i++) {
-	push (@range, int rand($number - 1));
+	if (!$number) {
+		$number = 1;
 	}
-##	if ($number > 16) {
-##		$range = 16;
-##	}
-##	else {
-##		$range = $number-1;
-##	}
+	for (my $i = 0; $i < 15; $i++) {
+		push (@range, int rand($number - 1));
+	}
 		
 	for my $n (@range){
 		push (@basis, $n) if ($n % $number);
@@ -77,5 +74,4 @@ sub finde_basis($) {
 	return @basis;
 }
 
-
-
+1;
