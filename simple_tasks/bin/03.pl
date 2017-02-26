@@ -8,14 +8,13 @@ sub run($$$; @);
 
 sub run($$$; @)
 {
-	my ($x, $y, $z) = @_;
-	my @nums = ();
-	my ($min, $max) = ();	
+	my @xyz = @_;
+	my ($min, $max) = ($xyz[0], $xyz[$#xyz]);	
 
-	@nums = sort { $a <=> $b } ($x, $y, $z);
-
-	$min = shift(@nums);
-	$max = pop(@nums);
+	for my $num (@xyz) {
+		$max = $num if ($num > $max);
+		$min = $num if ($num < $min);
+	}
 
 	say "$min, $max";
 }
