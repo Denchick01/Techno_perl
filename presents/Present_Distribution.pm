@@ -32,7 +32,8 @@ sub present_distribution(@) {
 
 	$number_of_people = keys %people;
 	%to_pr = map {$_ => 0} sort { int (rand (3) - 1) } keys %people; 
-									 								
+	
+	my $number_of_try = 0;									 								
 	TRY_AGAIN:
 	for my $from_m  ( keys %people) {
 		for my $to_m (keys %to_pr) {
@@ -48,8 +49,13 @@ sub present_distribution(@) {
 			last;		
 		}
 	}
-	goto TRY_AGAIN if (int(@res_pr/2) != int($number_of_people/2));
-
+	if ($number_of_try >= 10) {
+		say "there is no decision";
+		return 0;
+	}
+	$number_of_try++;	
+	goto TRY_AGAIN if (@res_pr != $number_of_people);
+	
 	return @res_pr;
 }
 
