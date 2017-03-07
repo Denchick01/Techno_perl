@@ -156,12 +156,12 @@ my $TESTS = [
         name => 'sub ref',
         orig => sub {},
         want_undef => 1,
-    }#,
-#    {
- #       name => 'complex with sub ref',
-  #      orig => [ 1, 2, 3, { a => 1, b => 2, c => [ qw/x y z/, sub {} ] } ],
-  #      want_undef => 1,
-   # },
+    },
+    {
+        name => 'complex with sub ref',
+        orig => [ 1, 2, 3, { a => 1, b => 2, c => [ qw/x y z/, sub {} ] } ],
+        want_undef => 1,
+    },
 ];
 
 test_deep($_) for @$TESTS;
