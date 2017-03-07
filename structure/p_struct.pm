@@ -13,6 +13,7 @@ my %ref_stack = (); #В хэш записываю все ссылки котор
 sub p_struct($);
 sub main($);
 
+
 sub main($) 
 {
 	my $temp = p_struct(shift);
@@ -49,14 +50,14 @@ sub p_struct($)
 		!(ref($t_value->[1]) eq "CODE")) {
 			$ref_stack{$t_value->[1]} = 1;
 			if (ref($struct) eq "HASH") {
-				return $t_value->[0] if (ref($$array_or_hash{$t_value->[0]} = p_struct($t_value->[1])) eq "CODE");
+				return sub {} if (ref($$array_or_hash{$t_value->[0]} = p_struct($t_value->[1])) eq "CODE");
 			}
 			elsif (ref($struct) eq "ARRAY") {
-				return $t_value->[0] if (ref($$array_or_hash[$t_value->[0]] = p_struct($t_value->[1])) eq "CODE");
+				return sub {} if (ref($$array_or_hash[$t_value->[0]] = p_struct($t_value->[1])) eq "CODE");
 			}
 		}
 		elsif (ref($t_value->[1]) eq "CODE") {
-			return $t_value->[1];
+			return sub {};
 		}
 		else {
 			if (ref($struct) eq "HASH") {
@@ -67,7 +68,6 @@ sub p_struct($)
 			}
 		}
 	}
-
 	return $array_or_hash;
 }
 1;	
