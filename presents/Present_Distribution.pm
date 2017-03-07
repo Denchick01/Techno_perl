@@ -15,6 +15,8 @@ sub present_distribution(@) {
 	my %to_pr = ();
 	my @res_pr = ();
 	my $number_of_people = 0;
+	my $number_p = 0;
+	my $number_a = 0;
 
 	for my $memb (@_) {
 		if (ref $memb) {
@@ -22,18 +24,29 @@ sub present_distribution(@) {
 			$memb->[1]=~s/\s//g;
 			$people {$memb->[0]} = [$memb->[0], '']; 	## Каждой паре присваивается свой индивидуальный идентификатор 
 			$people {$memb->[1]} = [$memb->[0], ''];	## в виде имени одного из супругов
+			$number_p++;
 		}					
 		else {
 			my $temp = $memb;
 			$temp=~s/\s//g;
 			$people {$memb} = ['', ''];
+			$number_a++;
 		}
+	}
+
+	if (($number_p > 0 && $number_a > 0 && ($number_p < 3 || $number_a < 3)) && 
+	(($number_p*2 + $number_a) < 6 || (($number_p*2 + $number_a) % 2 ))) {
+		say "there is no decision";
+		return [];
+	}
+	if (($number_p < 3 && $number_a < 3) && ($number_p <= 0 || $number_a <= 0)) {
+		say "there is no decision";
+		return [];
 	}
 
 	$number_of_people = keys %people;
 	%to_pr = map {$_ => 0} sort { int (rand (3) - 1) } keys %people; 
 	
-	my $number_of_try = 0;									 								
 	TRY_AGAIN:
 	for my $from_m  ( keys %people) {
 		for my $to_m (keys %to_pr) {
@@ -49,11 +62,6 @@ sub present_distribution(@) {
 			last;		
 		}
 	}
-	if ($number_of_try >= 10) {
-		say "there is no decision";
-		return 0;
-	}
-	$number_of_try++;	
 	goto TRY_AGAIN if (@res_pr != $number_of_people);
 	
 	return @res_pr;
