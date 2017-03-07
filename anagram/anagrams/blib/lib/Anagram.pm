@@ -1,12 +1,13 @@
 package Anagram;
 
-use 5.010;
+use utf8;
+#use open qw(:std :utf8);
+use Encode qw(encode decode);
 use strict;
 use warnings;
-use FindBin '$Bin';
-use lib "$Bin/../../../anagram";
-use p_anagram;
-
+use 5.10.0;
+use bignum;
+use DDP;
 =encoding UTF8
 
 =head1 SYNOPSIS
@@ -42,9 +43,37 @@ anagram(['пятак', 'ЛиСток', 'пятка', 'стул', 'ПяТаК', '
 
 =cut
 
-sub anagram {
-   	return p_anagram::p_anargam(shift);
 
+sub anagram {
+	my @all_words = map {$_ = decode('utf8', $_); $_ =~ s/\s//g; lc($_)} @{$_[0]};
+        my %group_anagram = ();
+        my %result_anagram = ();
+        for my $t_word (@all_words) {
+                my $m_key = 0;
+                for my $t_char (split "", $t_word) {
+                        $m_key += ord($t_char);
+                } 
+                $m_key = $m_key * ($m_key - (length $t_word) ** 3);
+                if (!(exists $group_anagram{$m_key})) {
+                        $group_anagram{$m_key} = [$t_word];
+                }
+                else {
+                        my $no_anagr = 0;
+                        for my $t_anagr (@{$group_anagram{$m_key}}) {
+                                if ($t_anagr eq $t_word) {
+                                        $no_anagr = 1;
+                                        last;
+                                }
+                        }
+                        push @{$group_anagram{$m_key}}, $t_word if (!$no_anagr);
+                }                                               
+        }
+        for my $t_anagr (values %group_anagram) {
+                next if (scalar @$t_anagr <= 1);
+		my @temp = map {encode('utf8', $_)} sort { $a cmp $b } @$t_anagr;
+                $result_anagram{encode('utf8', $t_anagr->[0])} = [@temp];
+        }
+        return \%result_anagram;
 }
 
 1;
