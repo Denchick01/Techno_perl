@@ -19,7 +19,6 @@ sub p_anargam($)
 	my @all_words = map {$_ =~ s/\s//g; lc($_)} @{$_[0]};
 	my %group_anagram = ();
 	my %result_anagram = ();
-	my @tt;	
 
 	for my $t_word (@all_words) {
 		my $m_key = 0;
@@ -48,4 +47,4 @@ sub p_anargam($)
 	return \%result_anagram;
 		
 }
-
+1;
