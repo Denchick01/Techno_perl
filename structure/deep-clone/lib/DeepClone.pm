@@ -50,7 +50,6 @@ sub clone {
 
         my $temp = $ref_ex{ref($struct)}($struct);
         if (ref ($temp) eq "CODE") {
-		say $temp;
                 return undef;
         }
         else {
