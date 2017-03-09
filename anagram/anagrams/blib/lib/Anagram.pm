@@ -49,29 +49,21 @@ sub anagram {
         my %group_anagram = ();
         my %result_anagram = ();
         for my $t_word (@all_words) {
-                my $m_key = 0;
-                for my $t_char (split "", $t_word) {
-                        $m_key += ord($t_char);
-                } 
-                $m_key = $m_key * ($m_key - (length $t_word) ** 3);
+                my $m_key = join "", sort split "", $t_word;
                 if (!(exists $group_anagram{$m_key})) {
-                        $group_anagram{$m_key} = [$t_word];
+			$group_anagram{$m_key}{1} = $t_word;
+                        $group_anagram{$m_key}{$t_word} = 1;
                 }
                 else {
-                        my $no_anagr = 0;
-                        for my $t_anagr (@{$group_anagram{$m_key}}) {
-                                if ($t_anagr eq $t_word) {
-                                        $no_anagr = 1;
-                                        last;
-                                }
-                        }
-                        push @{$group_anagram{$m_key}}, $t_word if (!$no_anagr);
+			if (!(exists $group_anagram{$m_key}{$t_word})) {
+                        	$group_anagram{$m_key}{$t_word} = 1;
+			}
                 }                                               
         }
         for my $t_anagr (values %group_anagram) {
-                next if (scalar @$t_anagr <= 1);
-		my @temp = map {encode('utf8', $_)} sort { $a cmp $b } @$t_anagr;
-                $result_anagram{encode('utf8', $t_anagr->[0])} = [@temp];
+                next if (scalar keys %$t_anagr <= 2);
+		my @temp = map {encode('utf8', $_)} sort { $a cmp $b } grep {$_ ne 1} keys %$t_anagr;
+                $result_anagram{encode('utf8', $t_anagr->{1})} = \@temp;
         }
         return \%result_anagram;
 }
