@@ -18,7 +18,10 @@ sub parse_file {
     
     open my $fd, "-|", "bunzip2 < $file" or die "Can't open '$file': $!";
     while (my $log_line = <$fd>) {
-        $log_line =~ m{(?<IP>.+?)\s+\[(?<TIME>.*):(.*)\]\s+"((.)*?)"\s+(?<CODE>\d+)\s+(?<SIZE>\d+)\s+"(.+)"\s+"(?<K>.+?)"\s+};
+        chomp $log_line;
+
+        $log_line =~ m{^(?<IP>\d+.\d+.\d+.\d+)\s+(?:\[(?<TIME>\d{2}/\w{3}/\d{4}:\d{2}:\d{2})(?:.*?)\])\s+(?:"(?:GET|HEAD)(?:.*?)")
+                     \s+(?<CODE>\d+)\s+(?<SIZE>\d+)\s+(?:"(.*)")\s+(?:"(?<K>((?:\d+.?\d*)|(?:-)))")$}x;
 
         if (!exists $log_info{TOTAL_TIME}{$+{TIME}}) {
             $log_info{TOTAL_TIME}{$+{TIME}} = 1;
@@ -33,7 +36,7 @@ sub parse_file {
         if ($+{CODE} == 200) {
 		my $temp_k = $+{K};
 		$temp_k = 0 if ($+{K} eq "-");
-        	$log_info{$+{IP}}{DATA} += $+{SIZE} * $temp_k;
+        	$log_info{$+{IP}}{DATA} += ($+{SIZE} * $temp_k)/1024;
 	}
         $log_info{$+{IP}}{"DATA_$+{CODE}"} += $+{SIZE}/1024;
 
@@ -62,8 +65,8 @@ sub report {
         grep {$_ ne "TIME" && $_ ne "IP" && $_ ne "AVG"} 
         keys %{$result->{$key_ip}};
     }
-
     $total_info{AVG} = $total_info{COUNT}/keys %{$result->{TOTAL_TIME}};
+
 
     printf "%-20s%-10s%-10s%-10s%-10s%-10s%-10s%-10s%-10s%-10s%-10s%-10s%-10s%-10s\n", 
            "IP", "count", "avg", "data", "data_200", "data_301", "data_302", "data_400", 
@@ -76,10 +79,9 @@ sub report {
     for (my $it = 0; $it < 10; ++$it) {
 
         printf "%-20s%-10.1d%-10.2f%-10.1d%-10.1d%-10.1d%-10.1d%-10.1d%-10.1d%-10.1d%-10.1d%-10.1d%-10.1d%-10.1d\n",
-               @{$result->{$sort_keys[$it]}}{"IP", "COUNT", "AVG"}, ${$result->{$sort_keys[$it]}}{"DATA"}/1024, @{$result->{$sort_keys[$it]}}{"DATA_200", "DATA_301", 
+               @{$result->{$sort_keys[$it]}}{"IP", "COUNT", "AVG", "DATA", "DATA_200", "DATA_301", 
 	       "DATA_302", "DATA_400", "DATA_403", "DATA_404", "DATA_408", "DATA_414", "DATA_499", "DATA_500"};
     }
 
 }
-
 1;
