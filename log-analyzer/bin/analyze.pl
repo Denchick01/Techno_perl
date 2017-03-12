@@ -36,9 +36,9 @@ sub parse_file {
         if ($+{CODE} == 200) {
 		my $temp_k = $+{K};
 		$temp_k = 0 if ($+{K} eq "-");
-        	$log_info{$+{IP}}{DATA} += ($+{SIZE} * $temp_k)/1024;
+        	$log_info{$+{IP}}{DATA} += int ($+{SIZE} * $temp_k);
 	}
-        $log_info{$+{IP}}{"DATA_$+{CODE}"} += $+{SIZE}/1024;
+        $log_info{$+{IP}}{"DATA_$+{CODE}"} += $+{SIZE};
 
         #Подсчет минут и AVG 
         if (! exists $log_info{$+{IP}}{TIME}{$+{TIME}}) {
@@ -68,19 +68,23 @@ sub report {
     $total_info{AVG} = $total_info{COUNT}/keys %{$result->{TOTAL_TIME}};
 
 
-    printf "%-20s%-10s%-10s%-10s%-10s%-10s%-10s%-10s%-10s%-10s%-10s%-10s%-10s%-10s\n", 
-           "IP", "count", "avg", "data", "data_200", "data_301", "data_302", "data_400", 
-           "data_403", "data_404", "data_408", "data_414", "data_499", "data_500";    
+    print "IP\tcount\tavg\tdata\tdata_200\tdata_301\tdata_302\tdata_400\t"; 
+    print  "data_403\tdata_404\tdata_408\tdata_414\tdata_499\tdata_500\n";    
 
-    printf "%-20s%-10.1d%-10.2f%-10.1d%-10.1d%-10.1d%-10.1d%-10.1d%-10.1d%-10.1d%-10.1d%-10.1d%-10.1d%-10.1d\n",
-           "total", @total_info{"COUNT", "AVG", "DATA", "DATA_200", "DATA_301", "DATA_302", "DATA_400", 
-           "DATA_403", "DATA_404", "DATA_408", "DATA_414", "DATA_499", "DATA_500"};
+    my @temp_arr = map {$_/1024} @total_info{"DATA", "DATA_200", "DATA_301", "DATA_302", "DATA_400",
+                       "DATA_403", "DATA_404", "DATA_408", "DATA_414", "DATA_499", "DATA_500"};
+
+    printf "%s\t%.1d\t%.2f\t%.1d\t%.1d\t%.1d\t%.1d\t%.1d\t%.1d\t%.1d\t%.1d\t%.1d\t%.1d\t%.1d\n",
+           "total", @total_info{"COUNT", "AVG"}, @temp_arr;
 
     for (my $it = 0; $it < 10; ++$it) {
 
-        printf "%-20s%-10.1d%-10.2f%-10.1d%-10.1d%-10.1d%-10.1d%-10.1d%-10.1d%-10.1d%-10.1d%-10.1d%-10.1d%-10.1d\n",
-               @{$result->{$sort_keys[$it]}}{"IP", "COUNT", "AVG", "DATA", "DATA_200", "DATA_301", 
-	       "DATA_302", "DATA_400", "DATA_403", "DATA_404", "DATA_408", "DATA_414", "DATA_499", "DATA_500"};
+         my @temp_arr = map {$_/1024} @{$result->{$sort_keys[$it]}}{"DATA", "DATA_200", "DATA_301", "DATA_302", "DATA_400",
+                            "DATA_403", "DATA_404", "DATA_408", "DATA_414", "DATA_499", "DATA_500"};
+
+         printf "%s\t%.1d\t%.2f\t%.1d\t%.1d\t%.1d\t%.1d\t%.1d\t%.1d\t%.1d\t%.1d\t%.1d\t%.1d\t%.1d\n",
+           @{$result->{$sort_keys[$it]}}{"IP", "COUNT", "AVG"}, @temp_arr;
+
     }
 
 }
