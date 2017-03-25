@@ -3,7 +3,7 @@ package myconst;
 use strict;
 use warnings;
 use Scalar::Util 'looks_like_number';
-
+use 5.10.0;
 
 =encoding utf8
 
@@ -37,6 +37,35 @@ print ZERO;             # 0
 print PI;               # 3.14
 =cut
 
+no strict 'refs';
+sub import {
+    die "Invalid argument" if ((@_ - 1) % 2);
 
+    my %args = @_[1..$#_];
+   
+    my $packge = caller; 
+
+    for my $c_name (keys %args) {
+        if ((ref($args{$c_name}) && (ref($args{$c_name}) ne "HASH")) ||
+            looks_like_number($c_name) || ref($c_name) || $c_name =~ /[@\\']/g) {
+            die "Invalid argument";
+        }
+        elsif (ref($args{$c_name}) eq "HASH") {
+            for my $cc_name (keys %{$args{$c_name}}) {
+                if (ref($args{$c_name}{$cc_name}) || looks_like_number($cc_name) ||
+                    $cc_name =~ /[@\\']/g) {
+                    die "Invalid argument";
+                }
+                else  {
+                    *{"$packge::$cc_name"} = sub () {$args{$c_name}{$cc_name}}; 
+                }
+            }
+       }
+       else {
+           *{"$packge::$c_name"} = sub () {$args{$c_name}};
+       }
+   }
+}
+use strict 'refs';
 
 1;
