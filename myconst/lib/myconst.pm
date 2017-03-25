@@ -1,3 +1,7 @@
+use Exporter 'import';
+our @EXPORT;
+our %EXPORT_TAGS;
+
 package myconst;
 
 use strict;
@@ -57,12 +61,17 @@ sub import {
                     die "Invalid argument";
                 }
                 else  {
-                    *{"$packge::$cc_name"} = sub () {$args{$c_name}{$cc_name}}; 
+                    *{"$packge::$cc_name"} = sub () {$args{$c_name}{$cc_name}};
+                     $EXPORT_TAGS{$c_name}[scalar @{$EXPORT_TAGS{$c_name}}] = "$cc_name";
+                     $EXPORT_TAGS{all}[scalar @{$EXPORT_TAGS{all}}] = "$cc_name";
+                     push @EXPORT, "$cc_name"; 
                 }
             }
        }
        else {
            *{"$packge::$c_name"} = sub () {$args{$c_name}};
+            $EXPORT_TAGS{all}[scalar @{$EXPORT_TAGS{all}}] = "$c_name";
+            push @EXPORT, "$c_name";
        }
    }
 }
