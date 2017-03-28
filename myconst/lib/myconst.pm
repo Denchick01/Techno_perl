@@ -1,7 +1,3 @@
-use Exporter 'import';
-our @EXPORT;
-our %EXPORT_TAGS;
-
 package myconst;
 
 use strict;
@@ -48,6 +44,8 @@ sub import {
     my %args = @_[1..$#_];
    
     my $packge = caller; 
+    
+    push @{"${packge}::ISA"}, 'Exporter';
 
     for my $c_name (keys %args) {
         if ((ref($args{$c_name}) && (ref($args{$c_name}) ne "HASH")) ||
@@ -62,16 +60,16 @@ sub import {
                 }
                 else  {
                     *{"$packge::$cc_name"} = sub () {$args{$c_name}{$cc_name}};
-                     $EXPORT_TAGS{$c_name}[scalar @{$EXPORT_TAGS{$c_name}}] = "$cc_name";
-                     $EXPORT_TAGS{all}[scalar @{$EXPORT_TAGS{all}}] = "$cc_name";
-                     push @EXPORT, "$cc_name"; 
+                     ${"${packge}::EXPORT_TAGS"}{$c_name}[scalar @{${"${packge}::EXPORT_TAGS"}{$c_name}}] = "$cc_name";
+                     ${"${packge}::EXPORT_TAGS"}{all}[scalar @{${"${packge}::EXPORT_TAGS"}{all}}] = "$cc_name";
+                     push @{"${packge}::EXPORT"}, "$cc_name"; 
                 }
             }
        }
        else {
            *{"$packge::$c_name"} = sub () {$args{$c_name}};
-            $EXPORT_TAGS{all}[scalar @{$EXPORT_TAGS{all}}] = "$c_name";
-            push @EXPORT, "$c_name";
+            ${"${packge}::EXPORT_TAGS"}{all}[scalar @{${"${packge}::EXPORT_TAGS"}{all}}] = "$c_name";
+            push @{"${packge}::EXPORT"}, "$c_name";
        }
    }
 }
