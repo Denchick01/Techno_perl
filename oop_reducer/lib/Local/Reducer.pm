@@ -1,24 +1,35 @@
-package Local::Reducer;
+package Local::Reducer; 
 
 use strict;
 use warnings;
+use 5.10.0;
+use Mouse;
 
-=encoding utf8
+has source => ( 
+    is => 'ro',
+    isa => 'Object',
+);
 
-=head1 NAME
+has row_class => (
+    is => 'ro',
+    isa => 'Str',
+);
 
-Local::Reducer - base abstract reducer
+has initial_value => (
+    is => 'ro',
+    isa => 'Int',
+    default => 0,
+);
 
-=head1 VERSION
+has reduced => (
+    is => 'rw',
+    isa => 'Int',
+    lazy => 1,
+    default => sub { my ($self) =@_;
+                return $self->initial_value},
+);
 
-Version 1.00
-
-=cut
-
-our $VERSION = '1.00';
-
-=head1 SYNOPSIS
-
-=cut
+sub reduce_n {}
+sub reduce_all {}
 
 1;
