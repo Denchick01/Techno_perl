@@ -37,27 +37,33 @@ print ZERO;             # 0
 print PI;               # 3.14
 =cut
 
-no strict 'refs';
+
 sub import {
     die "Invalid argument" if ((@_ - 1) % 2);
 
     my %args = @_[1..$#_];
    
     my $packge = caller; 
+   
     
-    push @{"${packge}::ISA"}, 'Exporter';
+    
+    no strict 'refs';
+    push @{"${packge}::ISA"}, 'Exporter';    
 
     for my $c_name (keys %args) {
         if ((ref($args{$c_name}) && (ref($args{$c_name}) ne "HASH")) ||
             looks_like_number($c_name) || ref($c_name) || $c_name =~ /[@\\']/g) {
             die "Invalid argument";
         }
+
+   
         elsif (ref($args{$c_name}) eq "HASH") {
             for my $cc_name (keys %{$args{$c_name}}) {
                 if (ref($args{$c_name}{$cc_name}) || looks_like_number($cc_name) ||
                     $cc_name =~ /[@\\']/g) {
                     die "Invalid argument";
                 }
+        
                 else  {
                     *{"$packge::$cc_name"} = sub () {$args{$c_name}{$cc_name}};
                      ${"${packge}::EXPORT_TAGS"}{$c_name}[scalar @{${"${packge}::EXPORT_TAGS"}{$c_name}}] = "$cc_name";
@@ -71,8 +77,9 @@ sub import {
             ${"${packge}::EXPORT_TAGS"}{all}[scalar @{${"${packge}::EXPORT_TAGS"}{all}}] = "$c_name";
             push @{"${packge}::EXPORT"}, "$c_name";
        }
-   }
+   
+   } 
+   use strict 'refs';
 }
-use strict 'refs';
 
 1;
