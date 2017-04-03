@@ -5,8 +5,6 @@ use warnings;
 use 5.10.0;
 use Mouse;
 use Scalar::Util 'looks_like_number';
-use FindBin '$Bin';
-use lib "$Bin/../../../lib";
 use Local::Source::Array;
 use Local::Row::JSON;
 extends 'Local::Reducer';
