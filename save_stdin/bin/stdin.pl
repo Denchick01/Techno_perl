@@ -13,13 +13,13 @@ open my $fd, "> $path_to_file" or die "Can't open file $path_to_file";
 
 sub int_handler {
     state $push_count++;
-   
     if ($push_count <= 1) {
         print STDERR "Double Ctrl+C for exit";   
     }
     else {
-        dumper($data_size, $., $data_size/$.);
-        close($fd);
+        sleep (1);     #без слипа тест не проходит(( 
+        close ($fd);
+        say $data_size." ".$.." ".$data_size/$.;
         exit;
     }
 }
@@ -41,9 +41,9 @@ while (<>) {
     print $fd $_."$/";
 
     if (eof()) {
-        dumper($data_size, $., $data_size/$.);
-        close ($fd);
-        last;
+        close($fd);
+        say $data_size." ".$.." ".$data_size/$.;
+        exit;
     }   
 }
 
