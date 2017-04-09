@@ -8,6 +8,7 @@ my $path_to_file = '';
 GetOptions("file=s" => \$path_to_file) or 
           die "Error in command line arguments";
 
+
 my $data_size = 0;
 open my $fd, "> $path_to_file" or die "Can't open file $path_to_file";
 
@@ -17,9 +18,9 @@ sub int_handler {
         print STDERR "Double Ctrl+C for exit";   
     }
     else {
-        sleep (1);     #без слипа тест не проходит(( 
         close ($fd);
-        say $data_size." ".$.." ".$data_size/$.;
+        print $data_size." ".$.." ".$data_size/$.;
+        sleep (1);     #без слипа тест не проходит(( 
         exit;
     }
 }
@@ -33,7 +34,7 @@ sub dumper {
 $SIG{INT} = \&int_handler; 
 
 
-say "Get ready";
+print "Get ready";
 
 while (<>) {
     chomp;
@@ -42,7 +43,8 @@ while (<>) {
 
     if (eof()) {
         close($fd);
-        say $data_size." ".$.." ".$data_size/$.;
+        print $data_size." ".$.." ".$data_size/$.;
+        sleep (1);
         exit;
     }   
 }
