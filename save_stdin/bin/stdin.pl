@@ -25,11 +25,6 @@ sub int_handler {
     }
 }
 
-sub dumper {
-    my ($size, $number_of_string, $avg) = @_;
-    say "$size $number_of_string $avg";
-}
-    
 
 $SIG{INT} = \&int_handler; 
 
