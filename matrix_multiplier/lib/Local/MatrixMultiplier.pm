@@ -64,7 +64,7 @@ sub mult {
 
     }  
 
-   wait;
+   waitpid(-1, 0);
  
    for my $fh (@read) {
        while(<$fh>){ 
