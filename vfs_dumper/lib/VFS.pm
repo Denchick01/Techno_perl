@@ -8,7 +8,7 @@ use File::Basename;
 use File::Spec::Functions qw{catdir};
 use JSON::XS;
 no warnings 'experimental::smartmatch';
-
+use DDP;
 
 sub mode2s {
    
@@ -27,7 +27,6 @@ sub mode2s {
            else {
                $chmod{$user_n}{$mod_field} = JSON::XS::false;
            }
-
        }
    }
  
@@ -39,28 +38,25 @@ sub parse {
     my $buf = shift;
     my $root_dir = [];
     my $current_dir = $root_dir;
-    my @byte_buf = unpack ("C*", $buf);       
     my @path_stack;
+    my $c_byte;
 
     push @path_stack, $current_dir;
 
-    for (my $it = 0; $it < @byte_buf; ++$it) {
-        given ( chr($byte_buf[$it]) ) {     
+    while  (0 < length $buf) {      
+        ($c_byte, $buf) = unpack ("aa*", $buf);
+        given ($c_byte) {     
             when ("D") {
                 my %temp_dir = ();
-                my $name_size = ($byte_buf[$it + 1] * 255) + $byte_buf[$it + 2];
-                $it += 3;
-
                 $temp_dir{type} = "directory";
 
-                $temp_dir{name} = decode ("utf-8", join "", map {chr($_)} @byte_buf[$it..($it + $name_size - 1)]); 
-                $it += $name_size - 1;
+                ($c_byte, $buf) = unpack ("n/aa*", $buf);
+                $temp_dir{name} = decode ("utf-8", $c_byte);
 
-                $temp_dir{mode} = mode2s(($byte_buf[$it + 1] * 256) + $byte_buf[$it + 2]);
-                $it += 2;
-
+                ($c_byte, $buf) = unpack ("na*", $buf);
+                $temp_dir{mode} = mode2s($c_byte);
+               
                 $temp_dir{list} = [];
-
                 push @{$current_dir}, {%temp_dir}; 
             }
             when ("I") {
@@ -74,40 +70,28 @@ sub parse {
                 $current_dir = $path_stack[$#path_stack];
             }    
             when ("Z") {
-                die "Garbage ae the end of the buffer" if ($it != @byte_buf - 1);
+                die "Garbage ae the end of the buffer" if (length $buf > 0);
                 return $root_dir->[0] // {};
             }
             when ("F") {
                 use bigrat;
                 my %temp_file = ();
-                my $name_size = ($byte_buf[$it + 1] * 255) + $byte_buf[$it + 2];
-                $it += 3;
 
                 $temp_file{type} = "file";
 
-                $temp_file{name} = decode ("utf-8", join "", map {chr($_)} @byte_buf[$it..($it + $name_size - 1)]);
-                $it += $name_size - 1;
+                ($c_byte, $buf) = unpack ("n/aa*", $buf);                 
+                $temp_file{name} = decode ("utf-8", $c_byte);
 
-                $temp_file{mode} = mode2s(($byte_buf[$it + 1] * 256) + $byte_buf[$it + 2]);
-                $it += 3;
+                ($c_byte, $buf) = unpack ("na*", $buf);
+                $temp_file{mode} = mode2s($c_byte);
 
-                my $file_field_size = 4;
-                my $file_size = 0;
-                my $size_it = $file_field_size;
+                ($c_byte, $buf) = unpack ("Na*", $buf);
 
-                for (@byte_buf[$it..($it + $file_field_size)]) {--$size_it; $file_size += ($_ * ((2 ** (8 * $size_it))))}
-                $temp_file{size} = $file_size;                
-                $it += 4;
-
-                my $file_hash_size = 20;
-                my $hash_value = 0;
+                $temp_file{size} = $c_byte;                
                 
-                $size_it = $file_hash_size;
-                for (@byte_buf[$it..($it + $file_hash_size)]) {--$size_it; $hash_value += ($_ * ((2 ** (8 * $size_it))))}
-                $temp_file{hash} = $hash_value->as_hex;
-                $temp_file{hash} =~ s/^(0x)//;
-                $temp_file{hash} = sprintf ("%040s", "$temp_file{hash}");
-                $it += 19;
+                ($c_byte, $buf) = unpack ("a20a*", $buf);
+
+                $temp_file{hash} = unpack ("H*", $c_byte);
 
                 push @{$current_dir}, {%temp_file};
 
