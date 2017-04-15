@@ -53,12 +53,12 @@ sub import {
 
     for my $c_name (keys %args) {
         # Проверка на валидный ключ  
-        if (looks_like_number($c_name) || ref($c_name) || $c_name =~ /[@\\']/g) {
+        if ($c_name =~ /\W+|^\d+$/) {
             die "Invalid argument";
         }   
         elsif (ref($args{$c_name}) eq "HASH") {
             for my $cc_name (keys %{$args{$c_name}}) {
-                if (looks_like_number($cc_name) || $cc_name =~ /[@\\']/g) {
+                if ($cc_name =~ /\W+|^\d+$/) {
                     die "Invalid argument";
                 }        
                 elsif (ref(\$args{$c_name}{$cc_name}) eq "SCALAR")  {
