@@ -6,6 +6,7 @@ use POSIX;
 use 5.10.0;
 use JSON::XS;
 use DDP;
+use POSIX ":sys_wait_h";
 
 sub mult {
     my ($mat_a, $mat_b, $max_child) = @_;
@@ -64,8 +65,11 @@ sub mult {
 
     }  
 
-   waitpid(-1, 0);
- 
+   my $kid;
+   do {
+       $kid = waitpid(-1, 0);
+   } while $kid != -1;
+  
    for my $fh (@read) {
        while(<$fh>){ 
            my $json_xs = JSON::XS->new();
