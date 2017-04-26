@@ -3,80 +3,87 @@ use strict;
 use DBI;
 use FindBin; 
 use utf8;
-
-my $database = "Social_Network";
-my $user = $ARGV[0];
-my $password = $ARGV[1];
-
-#CREATE SCHEMA Social_Network DEFAULT CHARACTER SET utf8 COLLATE utf8_bin ;
-
-my $dbh = DBI->connect("DBI:mysql:$database", $user, $password) 
-                    or die "Error connecting to database";
-
-my $rv = $dbh->do("DROP TABLE IF EXISTS `user`");
-
-$rv = $dbh->do("CREATE TABLE `user` (`id` INTEGER NULL DEFAULT NULL,
-                `first_name` VARCHAR(108) NULL DEFAULT NULL,
-                `second_name` VARCHAR(108) NULL DEFAULT NULL,
-                 PRIMARY KEY (`id`))");
-
-$rv = $dbh->do("DROP TABLE IF EXISTS `user_realtion`");
-
-$rv = $dbh->do("CREATE TABLE `user_realtion` (`id` INTEGER NULL DEFAULT NULL,
-                `friend_id` VARCHAR(108) NULL DEFAULT NULL,
-                 PRIMARY KEY (`id`))");
+use open qw(:std :utf8);
+use 5.10.0;
+use YAML::Tiny;
 
 
-my $file = "$FindBin::Bin/../../etc/user.zip";
+$| = 1;
 
-open my $fd, "-|", "unzip -p $file" or die "Can't open '$file': $!";
+my $yaml = YAML::Tiny->read("$FindBin::Bin/../config.yml");
 
-my $id;
-my $first_name;
-my $second_name;
+print "Creat table...";
 
-while (my $file_line = <$fd>) {
-    chomp $file_line;
+system("mysql -u $yaml->[0]->{user} --password=$yaml->[0]->{password} < tablecreat.sql");
 
-    utf8::decode($file_line);
+say "ok";
 
-    $file_line =~ m{(?<ID>\d+)\s+(?<FIRST_NAME>\w+)\s+(?<SECOND_NAME>\w+)$}x;
+print "Connect to $yaml->[0]->{dsn}...";
 
-    $first_name = $+{FIRST_NAME};
-    $second_name  = $+{SECOND_NAME};
+my $dbh = DBI->connect("$yaml->[0]->{dsn};mysql_local_infile=1", $yaml->[0]->{user}, $yaml->[0]->{password}) 
+                       or die "Error connecting to database";
 
-    utf8::encode($first_name);
-    utf8::encode($second_name);
+say "ok";
 
-    $id = $dbh->quote($+{ID});
-    $first_name = $dbh->quote($first_name);
-    $second_name = $dbh->quote($second_name);
+my $file1 = "$FindBin::Bin/../../etc/user.zip";
+my $file2 = "$FindBin::Bin/../../etc/user_relation.zip";
+my $file3 = "user";
+my $file4 = "user_relation";
 
-    $rv = $dbh->do("INSERT INTO user (id, first_name, second_name) VALUES ($id, $first_name, $second_name)");
+open my $fd1, "-|", "unzip -p $file1" or die "Can't open '$file1': $!";
+open my $fd2, "-|", "unzip -p $file2" or die "Can't open '$file2': $!";
+open my $fd3, ">", "$file3" or die "Can't open '$file3': $!";
+open my $fd4, ">", "$file4" or die "Can't open '$file4': $!";
+
+my %count_friend = ();
+
+print "Parsing of file $file2...";
+
+while(<$fd2>) {
+    my $line = $_;
+    chomp $line;
+    $line =~ /(\d+)\s+(\d+)/;
+    $count_friend{$1}++;
+
+    if ($1 <= 50000 && $2 <= 50000) {
+        print $fd4 "$1 $2\n";
+    }
 }
 
-close ($fd);
+say "ok";
 
-$file = "$FindBin::Bin/../../etc/user_relation.zip";
+close($fd2);
+close($fd4);
 
-open  $fd, "-|", "unzip -p $file" or die "Can't open '$file': $!";
+print "Parsing of file $file1...";
 
-my $friend_id;
+while(<$fd1>)  {
+     my $line = $_;
+     chomp $line;
 
-while (my $file_line = <$fd>) {
-    chomp $file_line;
+     $line =~ /(\d+)\s+(\w+)\s+(\w+)/;
 
-    $file_line =~ m{(?<ID>\d+)\s+(?<FRIEND_ID>\d+)$}x;
-
-
-print $+{FRIEND_ID}."\n";
-    $id = $dbh->quote($+{ID});
-    $friend_id = $dbh->quote($+{FRIEND_ID});
-
-    $rv = $dbh->do("INSERT INTO user_realtion (id, friend_id) VALUES ($id, $friend_id)");
+     $count_friend{$1} = 0 if (!exists $count_friend{$1});
+     print $fd3 "$line $count_friend{$1}\n";
 }
 
-close ($fd);
+say "ok";
+
+close($fd1);
+close($fd3);
+
+print "Initialization table user...";
+
+$dbh->do(qq{LOAD DATA LOCAL INFILE "user" INTO TABLE user FIELDS TERMINATED BY ' '});
+
+say "ok";
+
+print "Initialization table user_relation...";
+
+$dbh->do(qq{LOAD DATA LOCAL INFILE "user_relation" INTO TABLE user_relation FIELDS TERMINATED BY ' ' (user_id, friend_id)});
+
+say "ok";
+
 
 $dbh->disconnect;
 

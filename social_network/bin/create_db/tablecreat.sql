@@ -1,0 +1,31 @@
+DROP DATABASE IF EXISTS Social_Network;
+
+CREATE SCHEMA Social_Network DEFAULT CHARACTER SET utf8 COLLATE utf8_bin;
+
+USE Social_Network;
+
+SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
+SET FOREIGN_KEY_CHECKS=0;
+
+DROP TABLE IF EXISTS `user`;
+		
+CREATE TABLE `user` (
+  `id` INTEGER NULL DEFAULT NULL,
+  `first_name` VARCHAR(108) NULL DEFAULT NULL,
+  `second_name` VARCHAR(108) NULL DEFAULT NULL,
+  `number_of_friends` INTEGER NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+);
+
+DROP TABLE IF EXISTS `user_relation`;
+		
+CREATE TABLE `user_relation` (
+  `id` INTEGER NULL AUTO_INCREMENT DEFAULT NULL,
+  `user_id` INTEGER NULL DEFAULT NULL,
+  `friend_id` INTEGER NULL DEFAULT NULL,
+  PRIMARY KEY (`id`, `user_id`, `friend_id`)
+);
+
+
+ALTER TABLE `user` ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+ALTER TABLE `user_relation` ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
