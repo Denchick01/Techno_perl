@@ -1,52 +1,14 @@
 use utf8;
 package Local::Schema::Result::User;
 
-# Created by DBIx::Class::Schema::Loader
-# DO NOT MODIFY THE FIRST PART OF THIS FILE
-
-=head1 NAME
-
-Local::Schema::Result::User
-
-=cut
 
 use strict;
 use warnings;
 
 use base 'DBIx::Class::Core';
 
-=head1 TABLE: C<user>
-
-=cut
 
 __PACKAGE__->table("user");
-
-=head1 ACCESSORS
-
-=head2 id
-
-  data_type: 'integer'
-  default_value: 0
-  is_nullable: 0
-
-=head2 first_name
-
-  data_type: 'varchar'
-  is_nullable: 1
-  size: 108
-
-=head2 second_name
-
-  data_type: 'varchar'
-  is_nullable: 1
-  size: 108
-
-=head2 number_of_friends
-
-  data_type: 'integer'
-  is_nullable: 1
-
-=cut
 
 __PACKAGE__->add_columns(
   "id",
@@ -59,27 +21,9 @@ __PACKAGE__->add_columns(
   { data_type => "integer", is_nullable => 1 },
 );
 
-=head1 PRIMARY KEY
-
-=over 4
-
-=item * L</id>
-
-=back
-
-=cut
 
 __PACKAGE__->set_primary_key("id");
 
-=head1 RELATIONS
-
-=head2 user_relation_friends
-
-Type: has_many
-
-Related object: L<Local::Schema::Result::UserRelation>
-
-=cut
 
 __PACKAGE__->has_many(user_relation_users => 'Local::Schema::Result::UserRelation', 'friend_id');
 __PACKAGE__->many_to_many(user_friends => 'user_relation_users', 'friend');
@@ -87,17 +31,54 @@ __PACKAGE__->many_to_many(user_friends => 'user_relation_users', 'friend');
 __PACKAGE__->has_many(user_relation_users => 'Local::Schema::Result::UserRelation', 'user_id');
 __PACKAGE__->many_to_many(whose_friend => 'user_relation_users', 'user');
 
-=head2 user_relation_users
-
-Type: has_many
-
-Related object: L<Local::Schema::Result::UserRelation>
-
-=cut
-
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2017-04-23 21:08:23
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:kSf2MiAa83VRcEXGLfTchw
 
 
-# You can replace this text with custom code or comments, and it will be preserved on regeneration
+sub all_friends {
+    my ($self) = @_;
+    my %friends = ();
+
+    my $rs = $self->user_friends;
+
+    for my $friend ($rs->all()) {
+        $friends{$friend->id} = {first_name => $friend->first_name,
+                                 second_name => $friend->second_name,
+                                 number_of_friends => $friend->number_of_friends};
+    }
+
+    return \%friends;
+}
+
+sub search_num_handshakes {
+    my ($self, $user1_id) = @_;
+    my @queue = ();
+    my %used_id = ();
+    my $current_layer = 0;
+    my %user_db = ();
+ 
+    push @queue, {self => $self, colour => 0, num_layer => 0};
+
+    while (scalar @queue) {
+        if ($queue[0]->{colour} == 0) {
+            if (exists $used_id{$queue[0]->{self}->id}) {
+                shift @queue;
+                next; 
+            }
+            return $current_layer if ($queue[0]->{self}->id == $user1_id);
+            $queue[0]->{colour} = 1;
+        }
+        elsif ($queue[0]->{colour} == 1) {
+            my $current_id = shift @queue;
+            $used_id{$current_id->{self}->id} = 1;
+            $current_layer = $current_id->{num_layer};
+            push @queue, map {{self => $_, colour => 0, num_layer => $current_layer + 1}}
+                         ($current_id->{self}->user_friends->all); 
+        }
+        else {
+            die "Error in search_num_handshakes";
+        }
+    }
+    return $current_layer;
+}
+
+
 1;

@@ -8,7 +8,7 @@ use FindBin;
 use lib "$FindBin::Bin/../lib";
 use Local::Schema;
 use Local::OptParser;
-#use JSON::XS;
+use JSON::XS;
 use utf8;
 use Cache::Memcached;
  
@@ -28,43 +28,30 @@ $opt->parse;
 
 my $rs = $schema->resultset('User');
 
-#my $json_xs = JSON::XS->new();
+my $json_xs = JSON::XS->new();
 
 if ($opt->friends) {
-    print_pseudo_json($rs->search_mutual_friends($opt->user->[0], 
-                                                 $opt->user->[1]));
 
-#   say join "\n", split "},", $json_xs->encode($rs->search_mutual_friends($opt->user->[0], $opt->user->[1]));
+   say $json_xs->pretty(1)->encode($rs->search_mutual_friends($opt->user->[0], $opt->user->[1]));
 
 }
 elsif ($opt->nofriends) {
-    print_pseudo_json($rs->search_friends_number_is(0));
+     
+   say $json_xs->pretty(1)->encode($rs->search_friends_number_is(0));
 }
 elsif ($opt->num_handshakes) {
     my $temp_res;
-    $rs = $schema->resultset('UserRelation');
     if ($temp_res = $cache->get($opt->user->[0]."_".$opt->user->[1])) {
         say $temp_res;
     }
     else {
-        $temp_res = $rs->search_num_handshakes($opt->user->[0], $opt->user->[1]);    
+        $temp_res = $rs->find($opt->user->[0])->search_num_handshakes($opt->user->[1]);    
         $cache->set($opt->user->[0]."_".$opt->user->[1], $temp_res, 60);
         say $temp_res;
     }
 }
 else {
     die "You did not specify options";
-}
-
-sub print_pseudo_json {
-    my $res = shift;
-
-    say "[";
-    for (keys %{$res}) {
-        say qq[{"first_name": "$res->{$_}{first_name}",], 
-            qq["last_name": "$res->{$_}{second_name}", "id": $_},];
-    }
-    say "]";
 }
 
 1;

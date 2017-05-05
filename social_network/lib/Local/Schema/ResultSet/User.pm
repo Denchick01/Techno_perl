@@ -24,29 +24,14 @@ sub search_friends_number_is {
     return \%users;
 }
 
-sub all_friends {
-    my ($self, $id) = @_;
-    my %friends = ();
-
-    my $rs = $self->find($id)->user_friends;
-
-    for my $friend ($rs->all()) {
-        $friends{$friend->id} = {first_name => $friend->first_name, 
-                                 second_name => $friend->second_name, 
-                                 number_of_friends => $friend->number_of_friends};
-    }
-
-    return \%friends;
-}
-
 #SELECT * FROM  user_relation WHERE (user_id = ? OR user_id = ?) GROUP BY friend_id HAVING (COUNT(friend_id) > 1); 
 sub search_mutual_friends {
     my ($self, $user1_id, $user2_id) = @_;
     my %mutual_friends = ();
 
 
-    my $user1_friends = $self->all_friends($user1_id);
-    my $user2_friends = $self->all_friends($user2_id);
+    my $user1_friends = $self->find($user1_id)->all_friends;
+    my $user2_friends = $self->find($user2_id)->all_friends;
 
     for my $friend_id (keys %$user1_friends) {
         if (exists $user2_friends->{$friend_id}) {
